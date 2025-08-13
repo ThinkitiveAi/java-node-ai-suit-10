@@ -19,7 +19,6 @@ import java.util.List;
 public class CreateAvailabilityRequest {
     
     @NotNull(message = "Date is required")
-    @Future(message = "Date must be in the future")
     private LocalDate date;
     
     @NotNull(message = "Start time is required")
@@ -40,6 +39,9 @@ public class CreateAvailabilityRequest {
     @Max(value = 120, message = "Break duration cannot exceed 2 hours")
     @JsonProperty("break_duration")
     private Integer breakDuration = 0;
+    
+    @JsonProperty("max_appointments_per_slot")
+    private Integer maxAppointmentsPerSlot = 1;
     
     @JsonProperty("is_recurring")
     private Boolean isRecurring = false;

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+
 @Repository
 public interface AppointmentSlotRepository extends JpaRepository<AppointmentSlot, String> {
     
@@ -28,14 +29,14 @@ public interface AppointmentSlotRepository extends JpaRepository<AppointmentSlot
             @Param("appointmentTime") LocalDateTime appointmentTime);
     
     @Query("SELECT a FROM AppointmentSlot a WHERE a.patient.id = :patientId ORDER BY a.slotStartTime DESC")
-    Page<AppointmentSlot> findByPatientId(@Param("patientId") UUID patientId, Pageable pageable);
+    Page<AppointmentSlot> findByPatientId(@Param("patientId") String patientId, Pageable pageable);
     
     @Query("SELECT a FROM AppointmentSlot a WHERE a.provider.id = :providerId ORDER BY a.slotStartTime DESC")
     Page<AppointmentSlot> findByProviderId(@Param("providerId") UUID providerId, Pageable pageable);
     
     @Query("SELECT a FROM AppointmentSlot a WHERE " +
-           "(:startDate IS NULL OR DATE(a.slotStartTime) >= :startDate) AND " +
-           "(:endDate IS NULL OR DATE(a.slotStartTime) <= :endDate) AND " +
+           "(:startDate IS NULL OR a.slotStartTime >= :startDate) AND " +
+           "(:endDate IS NULL OR a.slotStartTime <= :endDate) AND " +
            "(:appointmentType IS NULL OR a.appointmentType = :appointmentType) AND " +
            "(:providerId IS NULL OR a.provider.id = :providerId) AND " +
            "(:patientId IS NULL OR a.patient.id = :patientId) AND " +
@@ -46,9 +47,13 @@ public interface AppointmentSlotRepository extends JpaRepository<AppointmentSlot
             @Param("endDate") LocalDateTime endDate,
             @Param("appointmentType") String appointmentType,
             @Param("providerId") UUID providerId,
-            @Param("patientId") UUID patientId,
+            @Param("patientId") String patientId,
             @Param("status") String status,
             Pageable pageable);
+            
+    // Simple query for testing
+    @Query("SELECT a FROM AppointmentSlot a")
+    Page<AppointmentSlot> findAllSlots(Pageable pageable);
     
     @Query("SELECT COUNT(a) FROM AppointmentSlot a WHERE a.provider.id = :providerId AND a.slotStartTime = :appointmentTime AND a.status = 'BOOKED'")
     long countBookedSlotsByProviderAndTime(

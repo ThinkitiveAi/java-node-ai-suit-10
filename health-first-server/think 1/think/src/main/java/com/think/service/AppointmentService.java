@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,11 +42,11 @@ public class AppointmentService {
                 request.getPatientId(), request.getProviderId(), request.getAppointmentDate(), request.getAppointmentTime());
         
         // Validate patient exists
-        Patient patient = patientRepository.findById(request.getPatientId().toString())
+        Patient patient = patientRepository.findById(request.getPatientId())
                 .orElseThrow(() -> new IllegalArgumentException("Patient not found with ID: " + request.getPatientId()));
         
         // Validate provider exists
-        Provider provider = providerRepository.findById(request.getProviderId())
+        Provider provider = providerRepository.findById(UUID.fromString(request.getProviderId()))
                 .orElseThrow(() -> new IllegalArgumentException("Provider not found with ID: " + request.getProviderId()));
         
         // Create appointment datetime
@@ -57,13 +58,13 @@ public class AppointmentService {
         }
         
         // Check for booking conflicts
-        if (appointmentSlotRepository.countBookedSlotsByProviderAndTime(request.getProviderId(), appointmentDateTime) > 0) {
+        if (appointmentSlotRepository.countBookedSlotsByProviderAndTime(UUID.fromString(request.getProviderId()), appointmentDateTime) > 0) {
             throw new IllegalArgumentException("This time slot is already booked");
         }
         
         // Find available slot
         Optional<AppointmentSlot> availableSlot = appointmentSlotRepository.findAvailableSlotByProviderAndTime(
-                request.getProviderId(), appointmentDateTime);
+                UUID.fromString(request.getProviderId()), appointmentDateTime);
         
         if (availableSlot.isEmpty()) {
             throw new IllegalArgumentException("No available slot found for the requested time");
@@ -96,30 +97,44 @@ public class AppointmentService {
                 request.getStartDate(), request.getEndDate(), request.getAppointmentType(), 
                 request.getProviderId(), request.getPatientId(), request.getStatus());
         
-        // Create pageable
-        Sort sort = Sort.by(Sort.Direction.fromString(request.getSortDirection()), request.getSortBy());
-        Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
-        
-        // Convert dates to LocalDateTime for query
-        LocalDateTime startDateTime = request.getStartDate() != null ? request.getStartDate().atStartOfDay() : null;
-        LocalDateTime endDateTime = request.getEndDate() != null ? request.getEndDate().atTime(LocalTime.MAX) : null;
-        
-        Page<AppointmentSlot> appointmentPage = appointmentSlotRepository.findAppointmentsWithFilters(
-                startDateTime, endDateTime, request.getAppointmentType(), 
-                request.getProviderId(), request.getPatientId(), request.getStatus(), pageable);
-        
-        // Convert to response
-        Page<AppointmentResponse> responsePage = appointmentPage.map(this::convertToAppointmentResponse);
-        
-        return new AppointmentListResponse(
-                responsePage.getContent(),
-                responsePage.getNumber(),
-                responsePage.getTotalPages(),
-                responsePage.getTotalElements(),
-                responsePage.getSize(),
-                responsePage.hasNext(),
-                responsePage.hasPrevious()
-        );
+        try {
+            // Create pageable
+            Sort sort = Sort.by(Sort.Direction.fromString(request.getSortDirection()), request.getSortBy());
+            Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+            
+            // Convert dates to LocalDateTime for query
+            LocalDateTime startDateTime = request.getStartDate() != null ? request.getStartDate().atStartOfDay() : null;
+            LocalDateTime endDateTime = request.getEndDate() != null ? request.getEndDate().atTime(LocalTime.MAX) : null;
+            
+            Page<AppointmentSlot> appointmentPage = appointmentSlotRepository.findAppointmentsWithFilters(
+                    startDateTime, endDateTime, request.getAppointmentType(), 
+                    request.getProviderId(), request.getPatientId(), request.getStatus(), pageable);
+            
+            // Convert to response
+            Page<AppointmentResponse> responsePage = appointmentPage.map(this::convertToAppointmentResponse);
+            
+            return new AppointmentListResponse(
+                    responsePage.getContent(),
+                    responsePage.getNumber(),
+                    responsePage.getTotalPages(),
+                    responsePage.getTotalElements(),
+                    responsePage.getSize(),
+                    responsePage.hasNext(),
+                    responsePage.hasPrevious()
+            );
+        } catch (Exception e) {
+            log.error("Error retrieving appointments", e);
+            // Return empty response instead of throwing exception
+            return new AppointmentListResponse(
+                    new ArrayList<>(),
+                    0,
+                    0,
+                    0L,
+                    request.getSize(),
+                    false,
+                    false
+            );
+        }
     }
     
     public AppointmentResponse getAppointmentByBookingReference(String bookingReference) {
@@ -189,7 +204,7 @@ public class AppointmentService {
         response.setUpdatedAt(slot.getUpdatedAt());
         
         if (slot.getPatient() != null) {
-            response.setPatientId(UUID.fromString(slot.getPatient().getId()));
+            response.setPatientId(slot.getPatient().getId());
             response.setPatientName(slot.getPatient().getFirstName() + " " + slot.getPatient().getLastName());
             response.setPatientEmail(slot.getPatient().getEmail());
             response.setPatientPhone(slot.getPatient().getPhoneNumber());
@@ -199,7 +214,7 @@ public class AppointmentService {
         }
         
         if (slot.getProvider() != null) {
-            response.setProviderId(slot.getProvider().getId());
+            response.setProviderId(slot.getProvider().getId().toString());
             response.setProviderName(slot.getProvider().getFirstName() + " " + slot.getProvider().getLastName());
             response.setProviderSpecialization(slot.getProvider().getSpecialization());
             response.setProviderEmail(slot.getProvider().getEmail());

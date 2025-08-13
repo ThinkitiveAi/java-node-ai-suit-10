@@ -17,11 +17,11 @@ public class AppointmentResponse {
     
     private String appointmentId;
     private String bookingReference;
-    private UUID patientId;
+    private String patientId;
     private String patientName;
     private String patientEmail;
     private String patientPhone;
-    private UUID providerId;
+    private String providerId;
     private String providerName;
     private String providerSpecialization;
     private LocalDate appointmentDate;

@@ -15,10 +15,10 @@ import java.util.UUID;
 public class BookAppointmentRequest {
     
     @NotNull(message = "Patient ID is required")
-    private UUID patientId;
+    private String patientId;
     
     @NotNull(message = "Provider ID is required")
-    private UUID providerId;
+    private String providerId;
     
     @NotNull(message = "Appointment date is required")
     private LocalDate appointmentDate;

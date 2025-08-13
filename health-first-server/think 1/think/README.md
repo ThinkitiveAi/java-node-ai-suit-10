@@ -1,36 +1,57 @@
-# Healthcare Provider & Patient Registration System
+# Healthcare Application - Provider & Patient Management System
 
-A secure Spring Boot application for healthcare provider and patient registration with comprehensive validation, security features, and testing.
+A comprehensive Spring Boot REST API application for healthcare provider and patient management, appointment booking, and availability scheduling with JWT-based authentication and role-based access control.
 
 ## Features
 
-- **Secure Provider Registration**: Complete registration system with validation
-- **Provider Login**: JWT-based authentication for healthcare providers
-- **Secure Patient Registration**: Comprehensive patient registration with HIPAA compliance
-- **Patient Login**: JWT-based authentication for patients with 30-minute token expiry
-- **Provider Availability Management**: Complete availability scheduling with recurring patterns
-- **Appointment Slot Management**: Automated slot generation and conflict prevention
-- **Patient Search & Booking**: Advanced search functionality for available appointments
+### Core Functionality
+- **Provider Management**: Registration, authentication, and profile management
+- **Patient Management**: Registration, authentication, and profile management
+- **Availability Management**: Create, update, delete provider availability slots
+- **Appointment Booking**: Search, book, view, and cancel appointments
+- **Search & Discovery**: Find providers by specialization, location, and availability
+
+### Security & Authentication
+- **JWT Authentication**: Stateless token-based authentication
+- **Role-based Access Control**: Provider and Patient roles with different permissions
 - **Password Security**: BCrypt hashing with 12 salt rounds
-- **Input Sanitization**: Protection against injection attacks
-- **Comprehensive Validation**: Email, phone, license number uniqueness
-- **Age Validation**: COPPA compliance (minimum 13 years old)
-- **RESTful API**: Clean REST endpoints with proper error handling
-- **Unit & Integration Tests**: Complete test coverage
-- **Database Integration**: JPA/Hibernate with H2 database
-- **Swagger Documentation**: Interactive API documentation
+- **Input Validation**: Comprehensive validation with sanitization
+- **Token Expiration**: Provider (1 hour), Patient (30 minutes)
+
+### Technical Features
+- **RESTful API**: Clean REST endpoints with proper HTTP status codes
+- **Database Persistence**: File-based H2 database with data persistence
+- **Automated Slot Generation**: 30-minute slots with configurable breaks
+- **Conflict Prevention**: Prevents overlapping availability slots
+- **Comprehensive Testing**: Unit and integration tests with high coverage
+- **API Documentation**: Interactive Swagger/OpenAPI documentation
+- **Docker Support**: Containerized deployment ready
 
 ## Technology Stack
 
-- **Spring Boot 3.2.0**
-- **Spring Security**
-- **Spring Data JPA**
-- **H2 Database** (for development)
-- **JWT (JSON Web Tokens)**
-- **Lombok**
-- **JUnit 5 & Mockito**
-- **Maven**
-- **SpringDoc OpenAPI** (Swagger)
+### Backend Framework
+- **Spring Boot 3.2.0** - Main application framework
+- **Spring Security** - Authentication and authorization
+- **Spring Data JPA** - Database operations
+- **Spring Web** - REST API endpoints
+- **Spring Validation** - Input validation
+
+### Database & Persistence
+- **H2 Database** - File-based persistent storage
+- **Hibernate** - ORM framework
+- **JPA** - Data persistence API
+
+### Security & Authentication
+- **JWT (JJWT 0.12.3)** - JSON Web Tokens
+- **BCrypt** - Password encryption
+
+### Development & Testing
+- **Java 17** - Programming language
+- **Maven** - Build tool
+- **Lombok** - Code generation
+- **JUnit 5** - Testing framework
+- **Mockito** - Mocking framework
+- **SpringDoc OpenAPI 2.2.0** - API documentation
 
 ## Database Schema
 
@@ -148,24 +169,32 @@ A secure Spring Boot application for healthcare provider and patient registratio
 
 ## API Endpoints
 
-### Provider Management
+### Public Endpoints (No Authentication Required)
 - **POST** `/api/providers/register` - Register a new provider
-- **GET** `/api/providers/{id}` - Get provider by ID
-- **GET** `/api/providers/email/{email}` - Get provider by email
-
-### Provider Authentication
 - **POST** `/api/v1/provider/login` - Provider login with JWT
-
-### Patient Management
 - **POST** `/api/v1/patient/register` - Register a new patient
 - **POST** `/api/v1/patient/login` - Patient login with JWT
+- **GET** `/api/v1/provider/availability/search` - Search available slots
 
-### Provider Availability Management
+### Provider-Only Endpoints (Requires Provider JWT)
 - **POST** `/api/v1/provider/availability` - Create availability slots
 - **GET** `/api/v1/provider/{providerId}/availability` - Get provider availability
 - **PUT** `/api/v1/provider/availability/{slotId}` - Update availability slot
 - **DELETE** `/api/v1/provider/availability/{slotId}` - Delete availability slot
-- **GET** `/api/v1/provider/availability/search` - Search available slots
+- **GET** `/api/providers` - Get all providers
+- **GET** `/api/providers/{id}` - Get provider by ID
+- **GET** `/api/providers/email/{email}` - Get provider by email
+
+### Patient & Provider Endpoints (Requires JWT)
+- **POST** `/api/appointments/book` - Book an appointment
+- **GET** `/api/appointments` - Get appointments list
+- **GET** `/api/appointments/{bookingReference}` - Get appointment by reference
+- **PUT** `/api/appointments/{bookingReference}/cancel` - Cancel appointment
+
+### Development Endpoints
+- **GET** `/h2-console` - H2 database console
+- **GET** `/swagger-ui.html` - API documentation
+- **GET** `/v3/api-docs` - OpenAPI specification
 
 ## Validation Rules
 
@@ -217,7 +246,18 @@ A secure Spring Boot application for healthcare provider and patient registratio
 - Maven 3.6 or higher
 - IntelliJ IDEA (recommended for Java 17 support)
 
-### Running the Application
+### Quick Start
+
+```bash
+# Clone and run
+git clone <repository-url>
+cd think
+./mvnw spring-boot:run
+
+# Application will be available at http://localhost:8088
+```
+
+### Detailed Setup
 
 1. **Clone the repository**
    ```bash
@@ -227,19 +267,19 @@ A secure Spring Boot application for healthcare provider and patient registratio
 
 2. **Build the project**
    ```bash
-   mvn clean install
+   ./mvnw clean install
    ```
 
 3. **Run the application**
    ```bash
-   mvn spring-boot:run
+   ./mvnw spring-boot:run
    ```
 
 4. **Access the application**
-   - Application: http://localhost:8089
-   - Swagger UI: http://localhost:8089/swagger-ui.html
-   - H2 Console: http://localhost:8089/h2-console
-     - JDBC URL: `jdbc:h2:mem:testdb`
+   - Application: http://localhost:8088
+   - Swagger UI: http://localhost:8088/swagger-ui.html
+   - H2 Console: http://localhost:8088/h2-console
+     - JDBC URL: `jdbc:h2:file:./data/healthcare_db`
      - Username: `sa`
      - Password: `password`
 
@@ -338,10 +378,11 @@ mvn test jacoco:report
 ## Database Access
 
 ### H2 Console
-- URL: http://localhost:8089/h2-console
-- JDBC URL: `jdbc:h2:mem:testdb`
+- URL: http://localhost:8088/h2-console
+- JDBC URL: `jdbc:h2:file:./data/healthcare_db`
 - Username: `sa`
 - Password: `password`
+- Database Type: File-based (persistent storage)
 
 ### Sample Queries
 ```sql
@@ -369,13 +410,15 @@ src/
 │   ├── java/com/think/
 │   │   ├── config/
 │   │   │   ├── SecurityConfig.java
-│   │   │   └── SwaggerConfig.java
+│   │   │   ├── SwaggerConfig.java
+│   │   │   └── JwtAuthenticationFilter.java
 │   │   ├── controller/
 │   │   │   ├── AuthController.java
 │   │   │   ├── ProviderController.java
 │   │   │   ├── PatientController.java
 │   │   │   ├── PatientAuthController.java
-│   │   │   └── ProviderAvailabilityController.java
+│   │   │   ├── ProviderAvailabilityController.java
+│   │   │   └── AppointmentController.java
 │   │   ├── dto/
 │   │   │   ├── ProviderRegistrationRequest.java
 │   │   │   ├── ProviderResponse.java
@@ -388,7 +431,10 @@ src/
 │   │   │   ├── CreateAvailabilityRequest.java
 │   │   │   ├── AvailabilityResponse.java
 │   │   │   ├── AvailabilitySearchRequest.java
-│   │   │   └── AvailabilitySearchResponse.java
+│   │   │   ├── AvailabilitySearchResponse.java
+│   │   │   ├── BookAppointmentRequest.java
+│   │   │   ├── AppointmentResponse.java
+│   │   │   └── AppointmentListResponse.java
 │   │   ├── entity/
 │   │   │   ├── Provider.java
 │   │   │   ├── ClinicAddress.java
@@ -408,7 +454,8 @@ src/
 │   │   ├── service/
 │   │   │   ├── ProviderService.java
 │   │   │   ├── PatientService.java
-│   │   │   └── ProviderAvailabilityService.java
+│   │   │   ├── ProviderAvailabilityService.java
+│   │   │   └── AppointmentService.java
 │   │   ├── util/
 │   │   │   └── JwtUtil.java
 │   │   └── ThinkApplication.java
@@ -421,14 +468,161 @@ src/
         │   ├── ProviderControllerTest.java
         │   ├── PatientControllerTest.java
         │   ├── PatientAuthControllerTest.java
-        │   └── ProviderAvailabilityControllerTest.java
+        │   ├── ProviderAvailabilityControllerTest.java
+        │   └── AppointmentControllerTest.java
         └── service/
             ├── ProviderServiceTest.java
             ├── ProviderServiceLoginTest.java
             ├── PatientServiceTest.java
             ├── PatientServiceLoginTest.java
-            └── ProviderAvailabilityServiceTest.java
+            ├── ProviderAvailabilityServiceTest.java
+            └── AppointmentServiceTest.java
 ```
+
+## Docker Support
+
+### Build and Run with Docker
+
+1. **Build the application**
+   ```bash
+   ./mvnw clean package
+   ```
+
+2. **Build Docker image**
+   ```bash
+   docker build -t healthcare-app .
+   ```
+
+3. **Run container**
+   ```bash
+   docker run -p 8088:8088 healthcare-app
+   ```
+
+## Authentication Examples
+
+### Provider Authentication Flow
+
+1. **Register Provider**
+   ```bash
+   curl -X POST http://localhost:8088/api/providers/register \
+     -H "Content-Type: application/json" \
+     -d '{
+       "firstName": "Dr. Sarah",
+       "lastName": "Johnson",
+       "email": "sarah.johnson@healthcare.com",
+       "password": "Password123!",
+       "phoneNumber": "+1555999888",
+       "specialization": "Dermatology",
+       "licenseNumber": "MD789012",
+       "yearsOfExperience": 8,
+       "clinicAddress": {
+         "street": "456 Health Ave",
+         "city": "Boston",
+         "state": "MA",
+         "zip": "02101"
+       }
+     }'
+   ```
+
+2. **Login Provider**
+   ```bash
+   curl -X POST http://localhost:8088/api/v1/provider/login \
+     -H "Content-Type: application/json" \
+     -d '{
+       "email": "sarah.johnson@healthcare.com",
+       "password": "Password123!"
+     }'
+   ```
+
+3. **Use JWT Token for Protected Endpoints**
+   ```bash
+   curl -X POST "http://localhost:8088/api/v1/provider/availability?providerId=<provider-id>" \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <jwt-token>" \
+     -d '{
+       "date": "2025-12-25",
+       "startTime": "09:00",
+       "endTime": "17:00",
+       "timezone": "America/New_York",
+       "location": {
+         "type": "CLINIC",
+         "address": "456 Health Ave, Boston, MA 02101"
+       }
+     }'
+   ```
+
+### Patient Authentication Flow
+
+1. **Register Patient**
+   ```bash
+   curl -X POST http://localhost:8088/api/v1/patient/register \
+     -H "Content-Type: application/json" \
+     -d '{
+       "first_name": "Alice",
+       "last_name": "Smith",
+       "email": "alice.smith@email.com",
+       "password": "Password123!",
+       "confirm_password": "Password123!",
+       "phone_number": "+1555777999",
+       "date_of_birth": "1985-03-20",
+       "gender": "FEMALE",
+       "address": {
+         "street": "789 Main St",
+         "city": "Boston",
+         "state": "MA",
+         "zip": "02102"
+       },
+       "emergency_contact": {
+         "name": "Bob Smith",
+         "phone": "+1555888777",
+         "relationship": "Spouse"
+       },
+       "medical_history": ["Allergies"],
+       "insurance_info": {
+         "provider": "HealthCare Plus",
+         "policy_number": "HP123456"
+       }
+     }'
+   ```
+
+2. **Login Patient**
+   ```bash
+   curl -X POST http://localhost:8088/api/v1/patient/login \
+     -H "Content-Type: application/json" \
+     -d '{
+       "email": "alice.smith@email.com",
+       "password": "Password123!"
+     }'
+   ```
+
+3. **Book Appointment**
+   ```bash
+   curl -X POST http://localhost:8088/api/appointments/book \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <patient-jwt-token>" \
+     -d '{
+       "patientId": "<patient-id>",
+       "providerId": "<provider-id>",
+       "appointmentDate": "2025-12-25",
+       "appointmentTime": "10:00",
+       "appointmentType": "CONSULTATION",
+       "appointmentMode": "IN_PERSON",
+       "reasonForVisit": "Skin consultation and checkup"
+     }'
+   ```
+
+## Test Data
+
+### Sample Provider
+- **Email**: `sarah.johnson@healthcare.com`
+- **Password**: `Password123!`
+- **Specialization**: Dermatology
+- **Location**: Boston, MA
+
+### Sample Patient
+- **Email**: `alice.smith@email.com`
+- **Password**: `Password123!`
+- **Location**: Boston, MA
 
 ## Contributing
 
@@ -441,4 +635,15 @@ src/
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support and questions:
+- Check the [API Documentation](API_DOCUMENTATION.md)
+- Review the [Project Documentation](PROJECT_DOCUMENTATION.md)
+- Open an issue on GitHub
+
+---
+
+**Healthcare Application** - A comprehensive healthcare provider and patient management system with JWT authentication and role-based access control.

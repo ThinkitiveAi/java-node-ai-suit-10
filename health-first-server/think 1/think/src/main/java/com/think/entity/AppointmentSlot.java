@@ -44,6 +44,7 @@ public class AppointmentSlot {
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private SlotStatus status = SlotStatus.AVAILABLE;
     
     @ManyToOne(fetch = FetchType.LAZY)

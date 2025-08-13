@@ -49,8 +49,8 @@ class AppointmentControllerTest {
 
         // Setup test request
         testRequest = new BookAppointmentRequest();
-        testRequest.setPatientId(UUID.randomUUID());
-        testRequest.setProviderId(UUID.randomUUID());
+        testRequest.setPatientId(UUID.randomUUID().toString());
+        testRequest.setProviderId(UUID.randomUUID().toString());
         testRequest.setAppointmentDate(LocalDate.of(2024, 2, 15));
         testRequest.setAppointmentTime(LocalTime.of(10, 0));
         testRequest.setAppointmentType("CONSULTATION");

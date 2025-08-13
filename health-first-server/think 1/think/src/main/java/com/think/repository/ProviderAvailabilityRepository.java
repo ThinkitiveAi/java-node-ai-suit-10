@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -58,8 +59,8 @@ public interface ProviderAvailabilityRepository extends JpaRepository<ProviderAv
     List<ProviderAvailability> findOverlappingSlots(
         @Param("providerId") UUID providerId,
         @Param("date") LocalDate date,
-        @Param("startTime") String startTime,
-        @Param("endTime") String endTime);
+        @Param("startTime") LocalTime startTime,
+        @Param("endTime") LocalTime endTime);
     
     List<ProviderAvailability> findByProvider_IdAndIsRecurringTrue(UUID providerId);
     

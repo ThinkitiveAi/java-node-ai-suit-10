@@ -32,16 +32,22 @@ public class ProviderAvailabilityService {
     public AvailabilityResponse createAvailability(String providerId, CreateAvailabilityRequest request) {
         log.info("Creating availability for provider: {}", providerId);
         
-        UUID providerUuid = UUID.fromString(providerId);
+        UUID providerUuid;
+        try {
+            providerUuid = UUID.fromString(providerId);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid provider ID format: " + providerId);
+        }
+        
         Provider provider = providerRepository.findById(providerUuid)
-            .orElseThrow(() -> new IllegalArgumentException("Provider not found"));
+            .orElseThrow(() -> new IllegalArgumentException("Provider not found with ID: " + providerId));
         
         // Validate time range
         validateTimeRange(request.getStartTime(), request.getEndTime());
         
         // Check for overlapping slots
         List<ProviderAvailability> overlappingSlots = availabilityRepository.findOverlappingSlots(
-            providerUuid, request.getDate(), request.getStartTime().toString(), request.getEndTime().toString());
+            providerUuid, request.getDate(), request.getStartTime(), request.getEndTime());
         
         if (!overlappingSlots.isEmpty()) {
             throw new IllegalArgumentException("Time slot overlaps with existing availability");
@@ -215,12 +221,15 @@ public class ProviderAvailabilityService {
             .startTime(request.getStartTime())
             .endTime(request.getEndTime())
             .timezone(request.getTimezone())
-            .isRecurring(request.getIsRecurring())
+            .isRecurring(request.getIsRecurring() != null ? request.getIsRecurring() : false)
             .recurrencePattern(request.getRecurrencePattern())
             .recurrenceEndDate(request.getRecurrenceEndDate())
-            .slotDuration(request.getSlotDuration())
-            .breakDuration(request.getBreakDuration())
-            .appointmentType(request.getAppointmentType())
+            .slotDuration(request.getSlotDuration() != null ? request.getSlotDuration() : 30)
+            .breakDuration(request.getBreakDuration() != null ? request.getBreakDuration() : 0)
+            .maxAppointmentsPerSlot(request.getMaxAppointmentsPerSlot() != null ? request.getMaxAppointmentsPerSlot() : 1)
+            .currentAppointments(0)
+            .status(ProviderAvailability.AvailabilityStatus.AVAILABLE)
+            .appointmentType(request.getAppointmentType() != null ? request.getAppointmentType() : ProviderAvailability.AppointmentType.CONSULTATION)
             .location(buildLocation(request.getLocation()))
             .pricing(buildPricing(request.getPricing()))
             .notes(request.getNotes())
@@ -238,12 +247,16 @@ public class ProviderAvailabilityService {
     
     private AvailabilityPricing buildPricing(CreateAvailabilityRequest.PricingRequest pricingRequest) {
         if (pricingRequest == null) {
-            return null;
+            return AvailabilityPricing.builder()
+                .baseFee(BigDecimal.valueOf(100.00))
+                .insuranceAccepted(false)
+                .currency("USD")
+                .build();
         }
         return AvailabilityPricing.builder()
-            .baseFee(pricingRequest.getBaseFee())
-            .insuranceAccepted(pricingRequest.getInsuranceAccepted())
-            .currency(pricingRequest.getCurrency())
+            .baseFee(pricingRequest.getBaseFee() != null ? pricingRequest.getBaseFee() : BigDecimal.valueOf(100.00))
+            .insuranceAccepted(pricingRequest.getInsuranceAccepted() != null ? pricingRequest.getInsuranceAccepted() : false)
+            .currency(pricingRequest.getCurrency() != null ? pricingRequest.getCurrency() : "USD")
             .build();
     }
     
@@ -262,6 +275,7 @@ public class ProviderAvailabilityService {
                 .provider(availability.getProvider())
                 .slotStartTime(slotStart)
                 .slotEndTime(slotEnd)
+                .status(AppointmentSlot.SlotStatus.AVAILABLE)
                 .appointmentType(availability.getAppointmentType().name())
                 .build();
             

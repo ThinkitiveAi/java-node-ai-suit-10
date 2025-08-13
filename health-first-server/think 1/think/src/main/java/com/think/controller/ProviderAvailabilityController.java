@@ -19,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
@@ -136,7 +138,8 @@ public class ProviderAvailabilityController {
             
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);
-            result.put("message", "An unexpected error occurred. Please try again later.");
+            result.put("message", "Error: " + e.getMessage());
+            result.put("error_type", e.getClass().getSimpleName());
             
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
@@ -304,6 +307,14 @@ public class ProviderAvailabilityController {
         }
     }
     
+    @GetMapping("/test")
+    public ResponseEntity<Map<String, Object>> test() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("message", "Test endpoint working - updated code");
+        result.put("timestamp", java.time.LocalDateTime.now());
+        return ResponseEntity.ok(result);
+    }
+    
     @GetMapping("/availability/search")
     @Operation(
         summary = "Search Available Slots",
@@ -375,5 +386,22 @@ public class ProviderAvailabilityController {
             
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
+    }
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", false);
+        result.put("message", "Validation failed");
+        
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        result.put("errors", errors);
+        
+        return ResponseEntity.badRequest().body(result);
     }
 }

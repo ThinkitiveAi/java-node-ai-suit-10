@@ -117,8 +117,8 @@ class AppointmentServiceTest {
 
         // Setup test request
         testRequest = new BookAppointmentRequest();
-        testRequest.setPatientId(UUID.fromString("patient-123"));
-        testRequest.setProviderId(testProvider.getId());
+        testRequest.setPatientId("patient-123");
+        testRequest.setProviderId(testProvider.getId().toString());
         testRequest.setAppointmentDate(LocalDate.of(2024, 2, 15));
         testRequest.setAppointmentTime(LocalTime.of(10, 0));
         testRequest.setAppointmentType("CONSULTATION");

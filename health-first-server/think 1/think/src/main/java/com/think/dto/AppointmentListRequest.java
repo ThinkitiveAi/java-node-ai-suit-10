@@ -16,7 +16,7 @@ public class AppointmentListRequest {
     private LocalDate endDate;
     private String appointmentType;
     private UUID providerId;
-    private UUID patientId;
+    private String patientId;
     private String status;
     private Integer page = 0;
     private Integer size = 20;
